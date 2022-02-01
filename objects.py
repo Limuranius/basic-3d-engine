@@ -192,7 +192,7 @@ class Matrix4x4:
         )
 
     @staticmethod
-    def get_perspective_projection(fov: int, aspect: float, n: float, f: float) -> Matrix4x4:
+    def get_perspective_projection(fov: float, aspect: float, n: float, f: float) -> Matrix4x4:
         """
         :param fov: Field of view in degrees
         :param aspect: width/height of canvas
@@ -224,31 +224,45 @@ class Matrix4x4:
 
 
 class Object3D:
-    def __init__(self, vertices, edges):
+    def __init__(self, vertices: list, edges: list, pos: tuple):
         self.vertices = vertices
         self.edges = edges
 
-        self.x = 0
-        self.y = 0
-        self.z = -1000
+        self.x = pos[0]
+        self.y = pos[1]
+        self.z = pos[2]
         self.vx = 0
         self.vy = 0
-        self.vz = 5
+        self.vz = 0
 
         self.x_rot = 0
         self.y_rot = 0
         self.z_rot = 0
         self.vx_rot = 0
-        self.vy_rot = 1
+        self.vy_rot = 0
         self.vz_rot = 0
 
         self.scale = 100
 
     def set_pos(self, x, y, z):
-        pass
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def set_speed(self, vx, vy, vz):
+        self.vx = vx
+        self.vy = vy
+        self.vz = vz
+
+    def set_rotation(self, x_rot, y_rot, z_rot):
+        self.x_rot = x_rot
+        self.y_rot = y_rot
+        self.z_rot = z_rot
 
     def set_rotation_speed(self, vx_rot, vy_rot, vz_rot):
-        pass
+        self.vx_rot = vx_rot
+        self.vy_rot = vy_rot
+        self.vz_rot = vz_rot
 
     def update_rotation(self):
         self.x_rot += self.vx_rot
@@ -264,34 +278,82 @@ class Object3D:
         self.update_rotation()
         self.update_movement()
 
-    def get_transform_matrix(self) -> Matrix4x4:
+    def get_transform_matrix(self, camera: Camera3D) -> Matrix4x4:
         transform_matrix = Matrix4x4.get_scale(self.scale, self.scale, self.scale)
         transform_matrix = Matrix4x4.multiply(transform_matrix, Matrix4x4.get_rotate_x(self.x_rot))
         transform_matrix = Matrix4x4.multiply(transform_matrix, Matrix4x4.get_rotate_y(self.y_rot))
         transform_matrix = Matrix4x4.multiply(transform_matrix, Matrix4x4.get_rotate_z(self.z_rot))
         transform_matrix = Matrix4x4.multiply(transform_matrix, Matrix4x4.get_translation(self.x, self.y, self.z))
-        transform_matrix = Matrix4x4.multiply(transform_matrix,
-                                              Matrix4x4.get_look_at(Vector3D(0, 0, 0), Vector3D(0, 0, -1),
-                                                                    Vector3D(0, -1, 0)))
-        transform_matrix = Matrix4x4.multiply(transform_matrix, Matrix4x4.get_perspective_projection(90, 1, -1, -1000))
+        transform_matrix = Matrix4x4.multiply(transform_matrix, camera.get_camera_matrix())
         return transform_matrix
 
-    def draw(self, surface, color):
-        transform_matrix = self.get_transform_matrix()
+    def draw(self, surface: pygame.Surface, color: tuple, camera: Camera3D):
+        """
+        Draw object on surface <surface> with color <color> according to position and angle of camera <camera>
+        :param surface: pygame surface that we draw on
+        :param color: RGB color of object
+        :param camera: camera object in 3D space
+        """
+        transform_matrix = self.get_transform_matrix(camera)
         obj_vertices = copy.deepcopy(self.vertices)  # Creating a copy of list of vertices
-        for i in range(len(obj_vertices)):  # Applying matrix to every vertex of object
+        for i in range(len(obj_vertices)):  # Applying matrix to every vertex of an object
             obj_vertices[i] = obj_vertices[i].mul_by_matrix(transform_matrix)
-            obj_vertices[i].x = obj_vertices[i].x / obj_vertices[i].w * 400
-            obj_vertices[i].y = obj_vertices[i].y / obj_vertices[i].w * 400
+            obj_vertices[i].x = obj_vertices[i].x / obj_vertices[i].w * (surface.get_width() / 2)
+            obj_vertices[i].y = obj_vertices[i].y / obj_vertices[i].w * (surface.get_height() / 2)
         for edge in self.edges:  # Drawing lines between corresponding vertices
             p1 = obj_vertices[edge[0]]
             p2 = obj_vertices[edge[1]]
-            pygame.draw.line(surface, color, Object3D.center_coords(surface, p1.x, p1.y), Object3D.center_coords(surface, p2.x, p2.y))
+            pygame.draw.line(surface, color, Object3D.center_coords(surface, p1.x, p1.y),
+                             Object3D.center_coords(surface, p2.x, p2.y))
         self.update()
 
     @staticmethod
     def center_coords(surface, x, y):
         return x + surface.get_width() / 2, y + surface.get_height() / 2
+
+
+class Camera3D:
+    def __init__(self, pos: Vector3D, target: Vector3D, up: Vector3D):
+        self.pos = pos
+        self.target = target
+        self.up = up
+
+        self.fov = 90
+        self.aspect_ratio = 1
+        self.near = -1
+        self.far = -1000
+
+        self.camera_matrix = Matrix4x4()
+        self.update_camera_matrix()
+
+    def update_camera_matrix(self):
+        view_matrix = Matrix4x4.get_look_at(self.pos, self.target, self.up)
+        projection_matrix = Matrix4x4.get_perspective_projection(self.fov, self.aspect_ratio, self.near, self.far)
+        self.camera_matrix = Matrix4x4.multiply(view_matrix, projection_matrix)
+
+    def get_camera_matrix(self):
+        return self.camera_matrix
+
+    def move_to(self, pos: Vector3D):
+        direction_vector = self.target - self.pos
+        self.pos = pos
+        self.target = self.pos + direction_vector
+        self.update_camera_matrix()
+
+    def get_pos(self) -> Vector3D:
+        return self.pos
+
+    def set_up(self, up: Vector3D):
+        self.up = up
+        self.update_camera_matrix()
+
+    def set_fov(self, fov: float):
+        self.fov = fov
+        self.update_camera_matrix()
+
+    def set_aspect_ratio(self, aspect_ratio: float):
+        self.aspect_ratio = aspect_ratio
+        self.update_camera_matrix()
 
 
 def main():
