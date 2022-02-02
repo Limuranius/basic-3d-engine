@@ -8,7 +8,7 @@ def deg_to_rad(degrees: Union[int, float]):
 
 
 class Vector3D:
-    def __init__(self, x: Union[int, float], y: Union[int, float], z: Union[int, float], w=1):
+    def __init__(self, x: Union[int, float], y: Union[int, float], z: Union[int, float], w: Union[int, float] = 1):
         self.x = x
         self.y = y
         self.z = z

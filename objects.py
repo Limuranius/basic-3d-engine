@@ -19,6 +19,13 @@ class Polygon:
         for i in range(3):
             self.points[i] = self.points[i].mul_by_matrix(matrix)
 
+    def is_visible(self, camera: Camera3D) -> bool:
+        d_prod = Vector3D.dot_product(self.get_normal(), camera.get_direction_vector())
+        if d_prod > 0:  # angle between camera and normal < 90
+            return True
+        else:
+            return False
+
     def draw(self, surface: pygame.Surface, color: tuple[int, int, int]):
         p1 = self.points[0]
         p2 = self.points[1]
@@ -80,6 +87,9 @@ class Object3D:
         self.vy_rot = vy_rot
         self.vz_rot = vz_rot
 
+    def set_scale(self, scale):
+        self.scale = scale
+
     def update_rotation(self):
         self.x_rot += self.vx_rot
         self.y_rot += self.vy_rot
@@ -114,7 +124,8 @@ class Object3D:
         obj_polygons = copy.deepcopy(self.polygons)  # Creating a copy of list of polygons
         for polygon in obj_polygons:  # Applying matrix to every polygon of an object
             polygon.apply_matrix(transform_matrix)
-            polygon.draw(surface, color)
+            if polygon.is_visible(camera):
+                polygon.draw(surface, color)
         self.update()
 
     @staticmethod
@@ -145,13 +156,16 @@ class Camera3D:
         return self.camera_matrix
 
     def move_to(self, pos: Vector3D):
-        direction_vector = self.target - self.pos
+        direction_vector = self.get_direction_vector()
         self.pos = pos
         self.target = self.pos + direction_vector
         self.update_camera_matrix()
 
     def get_pos(self) -> Vector3D:
         return self.pos
+
+    def get_direction_vector(self):
+        return (self.target - self.pos).normalize()
 
     def set_up(self, up: Vector3D):
         self.up = up

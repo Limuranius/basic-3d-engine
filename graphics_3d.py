@@ -14,10 +14,18 @@ BLACK = (0, 0, 0)
 
 def main():
     objects = []
+
     obj = models.Cube()
-    obj.set_pos(0, 0, -300)
-    obj.set_rotation_speed(0, 1, 0)
+    obj.set_pos(200, 0, -500)
+    obj.set_rotation_speed(0, 1, 1)
     objects.append(obj)
+
+    obj = models.CutPyramid()
+    obj.set_pos(-200, 0, -500)
+    obj.set_rotation_speed(0, 1, 0)
+    obj.set_scale(50)
+    objects.append(obj)
+
     camera = Camera3D(Vector3D(0, 0, 0), Vector3D(0, 0, -1), Vector3D(0, 1, 0))
 
     run = True
@@ -30,7 +38,7 @@ def main():
         WIN.fill(BLACK)
         for i in range(len(objects)):
             objects[i].draw(WIN, WHITE, camera)
-            time.sleep(1 / 60)
+        time.sleep(1 / 60)
         pygame.display.update()
 
     pygame.quit()
