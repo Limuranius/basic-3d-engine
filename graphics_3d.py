@@ -1,7 +1,7 @@
 import pygame
 import time
 from objects import Object3D, Vector3D, Matrix4x4, Camera3D
-from models import create_cut_pyramid, create_cube
+import models
 
 WIDTH = 800
 HEIGHT = 800
@@ -13,12 +13,11 @@ BLACK = (0, 0, 0)
 
 
 def main():
-    objects = [create_cut_pyramid(
-        (0, 0, -1000),
-        (0, 0, 5),
-        (0, 0, 0),
-        (0, 1, 3)
-    )]
+    objects = []
+    obj = models.Cube()
+    obj.set_pos(0, 0, -300)
+    obj.set_rotation_speed(0, 1, 0)
+    objects.append(obj)
     camera = Camera3D(Vector3D(0, 0, 0), Vector3D(0, 0, -1), Vector3D(0, 1, 0))
 
     run = True
