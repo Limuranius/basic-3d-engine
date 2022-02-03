@@ -91,6 +91,15 @@ class Matrix4x4:
         print()
 
     @staticmethod
+    def get_identity_matrix():
+        return Matrix4x4([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ])
+
+    @staticmethod
     def get_rotate_x(angle: Union[int, float]) -> Matrix4x4:
         """
         Get matrix of rotation around x-axis by <angle> degrees
@@ -212,12 +221,3 @@ class Matrix4x4:
             [0, 0, sz, -1],
             [0, 0, dz, 0],
         ])
-
-    """
-    return Matrix4x4([
-            [1, 0, 0, 0], 
-            [0, 1, 0, 0], 
-            [0, 0, 1, 0], 
-            [0, 0, 0, 1]
-        ])
-    """

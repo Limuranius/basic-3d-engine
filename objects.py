@@ -20,11 +20,24 @@ class Polygon:
             self.points[i] = self.points[i].mul_by_matrix(matrix)
 
     def is_visible(self, camera: Camera3D) -> bool:
-        d_prod = Vector3D.dot_product(self.get_normal(), camera.get_direction_vector())
-        if d_prod > 0:  # angle between camera and normal < 90
+        camera_direction_vector = (self.points[0] - camera.get_pos()).normalize()  # Vector from camera to point
+        d_prod = Vector3D.dot_product(self.get_normal(), camera_direction_vector)
+        if d_prod < 0:  # angle between camera and normal < 90
             return True
         else:
             return False
+
+    def get_white_hue_for_light(self, light_source: Vector3D) -> tuple[int, int, int]:
+        norm = self.get_normal()
+        dp = Vector3D.dot_product(norm, light_source)
+        cos_angle = abs(dp / (light_source.length() * norm.length()))
+        c = int(cos_angle * 255)
+        color = (c, c, c)
+        return color
+
+    def get_mean_z(self):
+        s = self.points[0].z + self.points[1].z + self.points[2].z
+        return s / 3
 
     def draw(self, surface: pygame.Surface, color: tuple[int, int, int]):
         p1 = self.points[0]
@@ -39,12 +52,19 @@ class Polygon:
         p2.y = p2.y / p2.w * (surface.get_height() / 2)
         p3.y = p3.y / p3.w * (surface.get_height() / 2)
 
-        pygame.draw.line(surface, color,
-                         Object3D.center_coords(surface, p1.x, p1.y), Object3D.center_coords(surface, p2.x, p2.y))
-        pygame.draw.line(surface, color,
-                         Object3D.center_coords(surface, p1.x, p1.y), Object3D.center_coords(surface, p3.x, p3.y))
-        pygame.draw.line(surface, color,
-                         Object3D.center_coords(surface, p2.x, p2.y), Object3D.center_coords(surface, p3.x, p3.y))
+        color = self.get_white_hue_for_light(Vector3D(0, 0, -1))
+
+        pygame.draw.polygon(surface, color,
+                            [Object3D.center_coords(surface, p1.x, p1.y),
+                             Object3D.center_coords(surface, p2.x, p2.y),
+                             Object3D.center_coords(surface, p3.x, p3.y)])
+
+        # pygame.draw.line(surface, color,
+        #                  Object3D.center_coords(surface, p1.x, p1.y), Object3D.center_coords(surface, p2.x, p2.y))
+        # pygame.draw.line(surface, color,
+        #                  Object3D.center_coords(surface, p1.x, p1.y), Object3D.center_coords(surface, p3.x, p3.y))
+        # pygame.draw.line(surface, color,
+        #                  Object3D.center_coords(surface, p2.x, p2.y), Object3D.center_coords(surface, p3.x, p3.y))
 
 
 class Object3D:
@@ -122,10 +142,18 @@ class Object3D:
         """
         transform_matrix = self.get_transform_matrix(camera)
         obj_polygons = copy.deepcopy(self.polygons)  # Creating a copy of list of polygons
-        for polygon in obj_polygons:  # Applying matrix to every polygon of an object
-            polygon.apply_matrix(transform_matrix)
+
+        # for polygon in obj_polygons:  # Applying matrix to every polygon of an object
+        #     polygon.apply_matrix(transform_matrix)
+        #     if polygon.is_visible(camera):
+        #         polygon.draw(surface, color)
+        for i in range(len(obj_polygons)):
+            obj_polygons[i].apply_matrix(transform_matrix)
+        obj_polygons = sorted(obj_polygons, key=lambda x: x.get_mean_z(), reverse=True)
+        for polygon in obj_polygons:
             if polygon.is_visible(camera):
                 polygon.draw(surface, color)
+
         self.update()
 
     @staticmethod
@@ -160,6 +188,18 @@ class Camera3D:
         self.pos = pos
         self.target = self.pos + direction_vector
         self.update_camera_matrix()
+
+    def move_by(self, d_pos: Vector3D):
+        self.pos += d_pos
+        self.target += d_pos
+        self.update_camera_matrix()
+
+    # WIP
+    # def turn_left(self, scale: Union[int, float]):
+    #     cross_prod = Vector3D.cross_product(self.get_direction_vector(), self.up).normalize()
+    #     new_direction_vector = cross_prod.mul_by_scalar(scale)
+    #     self.target = self.pos + new_direction_vector
+    #     self.update_camera_matrix()
 
     def get_pos(self) -> Vector3D:
         return self.pos

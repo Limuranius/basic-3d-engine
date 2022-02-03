@@ -15,15 +15,21 @@ BLACK = (0, 0, 0)
 def main():
     objects = []
 
-    obj = models.Cube()
-    obj.set_pos(200, 0, -500)
-    obj.set_rotation_speed(0, 1, 1)
-    objects.append(obj)
+    # obj = models.Cube()
+    # obj.set_pos(200, 0, -500)
+    # obj.set_rotation_speed(0, 1, 1)
+    # objects.append(obj)
+    # #
+    # obj = models.CutPyramid()
+    # obj.set_pos(-200, 0, -500)
+    # obj.set_rotation_speed(0, 1, 0)
+    # obj.set_scale(50)
+    # objects.append(obj)
 
-    obj = models.CutPyramid()
-    obj.set_pos(-200, 0, -500)
+    obj = models.FileObject("untitled.obj")
+    obj.set_pos(0, 0, -300)
+    obj.set_scale(20)
     obj.set_rotation_speed(0, 1, 0)
-    obj.set_scale(50)
     objects.append(obj)
 
     camera = Camera3D(Vector3D(0, 0, 0), Vector3D(0, 0, -1), Vector3D(0, 1, 0))
@@ -33,6 +39,30 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+        keys_pressed = pygame.key.get_pressed()
+        if keys_pressed[pygame.K_w]:  # Move forward
+            camera.move_by(Vector3D(0, 0, -2))
+        if keys_pressed[pygame.K_s]:  # Move backward
+            camera.move_by(Vector3D(0, 0, 2))
+        if keys_pressed[pygame.K_a]:  # Move left
+            camera.move_by(Vector3D(-2, 0, 0))
+        if keys_pressed[pygame.K_d]:  # Move right
+            camera.move_by(Vector3D(2, 0, 0))
+
+        if keys_pressed[pygame.K_SPACE]:  # Move up
+            camera.move_by(Vector3D(0, 2, 0))
+        if keys_pressed[pygame.K_LSHIFT]:  # Move down
+            camera.move_by(Vector3D(0, -2, 0))
+
+        # WIP
+        # if keys_pressed[pygame.K_d]:  # Turn up
+        #     camera.turn_up(2)
+        # if keys_pressed[pygame.K_d]:  # Turn down
+        #     camera.turn_down(2)
+        # if keys_pressed[pygame.K_LEFT]:  # Turn left
+        #     camera.turn_left(2)
+        # if keys_pressed[pygame.K_d]:  # Turn right
+        #     camera.turn_right(2)
 
         """Main Loop"""
         WIN.fill(BLACK)
