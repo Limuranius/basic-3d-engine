@@ -3,7 +3,7 @@ import time
 from objects import Object3D, Vector3D, Matrix4x4, Camera3D
 import models
 
-WIDTH = 800
+WIDTH = 1400
 HEIGHT = 800
 
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
