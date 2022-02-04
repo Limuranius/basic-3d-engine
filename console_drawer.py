@@ -1,3 +1,6 @@
+import os
+
+
 class ConsoleDrawer:
     def __init__(self):
         self.surface: list[list[str]] = []
@@ -12,7 +15,7 @@ class ConsoleDrawer:
     def set_size(self, width: int, height: int):
         self.width = width
         self.height = height
-        self.surface = [["" for _ in range(self.width)] for __ in range(self.height)]
+        self.surface = [[" " for _ in range(self.width)] for __ in range(self.height)]
 
     def draw_line(self, p1: tuple[float, float], p2: tuple[float, float], color: str = "@"):
         dx = p2[0] - p1[0]
@@ -66,18 +69,15 @@ class ConsoleDrawer:
             x2 = mid_2[0] + r_l_h * dy
             self.draw_line((x1, y), (x2, y), color)
 
-    def update(self):
-        pass
-
     def print_surface(self):
         print("".join(["".join(self.surface[i]) for i in range(len(self.surface))]), end="")
 
     @staticmethod
     def get_char_by_brightness(brightness: float) -> str:
         """
-
+        Returns ASCII character according to brigtness level
         :param brightness: Real number in range [0; 1]
-        :return:
+        :return: character
         """
         chars = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^`\'."
         return chars[-int(len(chars) * brightness)]

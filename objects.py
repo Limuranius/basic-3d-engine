@@ -40,53 +40,50 @@ class Polygon:
         s = self.points[0].z + self.points[1].z + self.points[2].z
         return s / 3
 
-    def draw(self, surface: pygame.Surface, color: tuple[int, int, int], console: ConsoleDrawer = None):
+    def draw(self, surface: pygame.Surface, color: tuple[int, int, int]):
         p1 = self.points[0]
         p2 = self.points[1]
         p3 = self.points[2]
 
-        if console is None:
-            width = surface.get_width() / 2
-            height = surface.get_height() / 2
+        width = surface.get_width() / 2
+        height = surface.get_height() / 2
 
-            p1.x = p1.x / p1.w * width
-            p2.x = p2.x / p2.w * width
-            p3.x = p3.x / p3.w * width
+        p1.x = p1.x / p1.w * width
+        p2.x = p2.x / p2.w * width
+        p3.x = p3.x / p3.w * width
 
-            p1.y = p1.y / p1.w * width
-            p2.y = p2.y / p2.w * width
-            p3.y = p3.y / p3.w * width
+        p1.y = p1.y / p1.w * width
+        p2.y = p2.y / p2.w * width
+        p3.y = p3.y / p3.w * width
 
-            color = self.get_white_hue_for_light(Vector3D(0, 0, -1))
+        color = self.get_white_hue_for_light(Vector3D(0, 0, -1))
 
-            pygame.draw.polygon(surface, color,
-                                [Object3D.center_coords(surface, p1.x, p1.y),
-                                 Object3D.center_coords(surface, p2.x, p2.y),
-                                 Object3D.center_coords(surface, p3.x, p3.y)])
-        else:
-            width = console.width / 2
-            height = console.height / 2
+        pygame.draw.polygon(surface, color,
+                            [Object3D.center_coords(surface, p1.x, p1.y),
+                             Object3D.center_coords(surface, p2.x, p2.y),
+                             Object3D.center_coords(surface, p3.x, p3.y)])
 
-            p1.x = p1.x / p1.w * width + width
-            p2.x = p2.x / p2.w * width + width
-            p3.x = p3.x / p3.w * width + width
+    def draw_console(self, console_drawer: ConsoleDrawer):
+        p1 = self.points[0]
+        p2 = self.points[1]
+        p3 = self.points[2]
 
-            p1.y = p1.y / p1.w * height + height
-            p2.y = p2.y / p2.w * height + height
-            p3.y = p3.y / p3.w * height + height
+        width = console_drawer.width / 2
+        height = console_drawer.height / 2
 
-            color = ConsoleDrawer.get_char_by_brightness(self.get_white_hue_for_light(Vector3D(0, 0, -1))[0] / 255)
+        p1.x = p1.x / p1.w * width + width
+        p2.x = p2.x / p2.w * width + width
+        p3.x = p3.x / p3.w * width + width
 
-            console.fill_triangle((p1.x, p1.y),
-                                  (p2.x, p2.y),
-                                  (p3.x, p3.y), color)
+        p1.y = p1.y / p1.w * height + height
+        p2.y = p2.y / p2.w * height + height
+        p3.y = p3.y / p3.w * height + height
 
-        # pygame.draw.line(surface, color,
-        #                  Object3D.center_coords(surface, p1.x, p1.y), Object3D.center_coords(surface, p2.x, p2.y))
-        # pygame.draw.line(surface, color,
-        #                  Object3D.center_coords(surface, p1.x, p1.y), Object3D.center_coords(surface, p3.x, p3.y))
-        # pygame.draw.line(surface, color,
-        #                  Object3D.center_coords(surface, p2.x, p2.y), Object3D.center_coords(surface, p3.x, p3.y))
+        color = ConsoleDrawer.get_char_by_brightness(self.get_white_hue_for_light(Vector3D(0, 0, -1))[0] / 255)
+
+        console_drawer.fill_triangle((p1.x, p1.y),
+                                     (p2.x, p2.y),
+                                     (p3.x, p3.y), color)
 
 
 class Object3D:
@@ -155,7 +152,7 @@ class Object3D:
         transform_matrix = Matrix4x4.multiply(transform_matrix, camera.get_camera_matrix())
         return transform_matrix
 
-    def draw(self, surface: pygame.Surface, color: tuple[int, int, int], camera: Camera3D, console: ConsoleDrawer = None):
+    def draw(self, surface: pygame.Surface, color: tuple[int, int, int], camera: Camera3D):
         """
         Draw object on surface <surface> with color <color> according to position and angle of camera <camera>
         :param surface: pygame surface that we draw on
@@ -165,17 +162,26 @@ class Object3D:
         transform_matrix = self.get_transform_matrix(camera)
         obj_polygons = copy.deepcopy(self.polygons)  # Creating a copy of list of polygons
 
-        # for polygon in obj_polygons:  # Applying matrix to every polygon of an object
-        #     polygon.apply_matrix(transform_matrix)
-        #     if polygon.is_visible(camera):
-        #         polygon.draw(surface, color)
-        for i in range(len(obj_polygons)):
+        for i in range(len(obj_polygons)):  # Applying matrix to every polygon
             obj_polygons[i].apply_matrix(transform_matrix)
-        obj_polygons = sorted(obj_polygons, key=lambda x: x.get_mean_z(), reverse=True)
-        for polygon in obj_polygons:
-            if polygon.is_visible(camera):
-                polygon.draw(surface, color, console)
 
+        obj_polygons = sorted(obj_polygons, key=lambda x: x.get_mean_z(), reverse=True)  # Sorting by z-coordinate
+        for polygon in obj_polygons:  # Drawing polygons
+            if polygon.is_visible(camera):
+                polygon.draw(surface, color)
+        self.update()
+
+    def draw_console(self, console_drawer: ConsoleDrawer, camera: Camera3D):
+        transform_matrix = self.get_transform_matrix(camera)
+        obj_polygons = copy.deepcopy(self.polygons)  # Creating a copy of list of polygons
+
+        for i in range(len(obj_polygons)):  # Applying matrix to every polygon
+            obj_polygons[i].apply_matrix(transform_matrix)
+
+        obj_polygons = sorted(obj_polygons, key=lambda x: x.get_mean_z(), reverse=True)  # Sorting by z-coordinate
+        for polygon in obj_polygons:  # Drawing polygons
+            if polygon.is_visible(camera):
+                polygon.draw_console(console_drawer)
         self.update()
 
     @staticmethod

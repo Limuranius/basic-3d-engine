@@ -5,13 +5,10 @@ from console_drawer import ConsoleDrawer
 
 
 def main():
-    objects = []
-
     obj = models.FileObject("untitled.obj")
     obj.set_pos(0, 0, -300)
     obj.set_scale(20)
     obj.set_rotation_speed(0, 0.3, 0)
-    objects.append(obj)
 
     camera = Camera3D(Vector3D(0, 0, 0), Vector3D(0, 0, -1), Vector3D(0, 1, 0))
     camera.set_fov(45)
@@ -22,11 +19,20 @@ def main():
     console_drawer.clear()
     camera.set_aspect_ratio(console_size[0] / console_size[1])
 
+    old_size = console_size
     run = True
     while run:
+        # Resizing image if needed
+        curr_size = tuple(os.get_terminal_size())
+        if curr_size != old_size:
+            console_drawer.set_size(curr_size[0], curr_size[1])
+            camera.set_aspect_ratio(curr_size[0] / curr_size[1])
+
+        # Drawing objects
         console_drawer.clear()
-        # console_drawer.draw_line((9.0, 7), (5.0, 7))
-        obj.draw(None, None, camera, console_drawer)
+
+        obj.draw_console(console_drawer, camera)
+
         console_drawer.print_surface()
 
 
